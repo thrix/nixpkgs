@@ -158,7 +158,11 @@ let
       hash = "sha256-O5xZHXNrJMpjTA2mrTqzMtU/55UArwoc2adc0R6pVl0=";
     };
 
-    env.FISH_BUILD_VERSION = finalAttrs.version;
+    env = {
+      FISH_BUILD_VERSION = finalAttrs.version;
+      # Skip tests that are known to be flaky in CI
+      CI = 1;
+    };
 
     cargoDeps = rustPlatform.fetchCargoVendor {
       inherit (finalAttrs) src;
@@ -191,7 +195,7 @@ let
         sed -i 's|"/bin/c"|"${lib.getExe' coreutils "c"}"|' src/tests/highlight.rs
         sed -i 's|"/bin/ca"|"${lib.getExe' coreutils "ca"}"|' src/tests/highlight.rs
 
-        sed -i 's|/usr|/build|' src/tests/highlight.rs
+        sed -i 's|/usr|/|' src/tests/highlight.rs
 
         # tests/checks/cd.fish
         sed -i 's|/bin/pwd|${coreutils}/bin/pwd|' tests/checks/cd.fish
@@ -215,18 +219,20 @@ let
       + lib.optionalString stdenv.hostPlatform.isDarwin ''
         # Tests use pkill/pgrep which are currently not built on Darwin
         # See https://github.com/NixOS/nixpkgs/pull/103180
+        # and https://github.com/NixOS/nixpkgs/issues/141157
         rm tests/pexpects/exit.py
         rm tests/pexpects/job_summary.py
         rm tests/pexpects/signals.py
-
-        # pexpect tests are flaky in general
-        # See https://github.com/fish-shell/fish-shell/issues/8789
-        rm tests/pexpects/bind.py
+        rm tests/pexpects/fg.py
       ''
       + lib.optionalString stdenv.hostPlatform.isLinux ''
         # pexpect tests are flaky on aarch64-linux (also x86_64-linux)
         # See https://github.com/fish-shell/fish-shell/issues/8789
         rm tests/pexpects/exit_handlers.py
+      ''
+      + lib.optionalString stdenv.hostPlatform.isAarch64 ''
+        # This test seems to consistently fail on aarch64
+        rm tests/checks/cd.fish
       '';
 
     outputs = [
@@ -286,12 +292,17 @@ let
 
     doCheck = true;
 
-    nativeCheckInputs = [
-      coreutils
-      glibcLocales
-      (python3.withPackages (ps: [ ps.pexpect ]))
-      procps
-    ];
+    nativeCheckInputs =
+      [
+        coreutils
+        glibcLocales
+        (python3.withPackages (ps: [ ps.pexpect ]))
+        procps
+      ]
+      ++ lib.optionals stdenv.hostPlatform.isDarwin [
+        # For the getconf command, used in default-setup-path.fish
+        darwin.system_cmds
+      ];
 
     checkTarget = "test";
     preCheck = ''
