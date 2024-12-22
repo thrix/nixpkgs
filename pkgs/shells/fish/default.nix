@@ -147,7 +147,7 @@ let
     end # fenv
   '';
 
-  fish = stdenv.mkDerivation rec {
+  fish = stdenv.mkDerivation (finalAttrs: {
     pname = "fish";
     version = "4.0b1";
 
@@ -158,12 +158,12 @@ let
       # the shell's actual version (and what it displays when running `fish
       # --version`), as well as the local documentation for all builtins (and
       # maybe other things).
-      url = "https://github.com/fish-shell/fish-shell/releases/download/${version}/${pname}-${version}.tar.xz";
+      url = "https://github.com/fish-shell/fish-shell/releases/download/${finalAttrs.version}/${finalAttrs.pname}-${finalAttrs.version}.tar.xz";
       hash = "sha256-U0M04Q+FciIU6dr/gqV8w1ASNVI/FvjxMcI0Tk7Jjac=";
     };
 
     cargoDeps = rustPlatform.fetchCargoVendor {
-      inherit src;
+      inherit (finalAttrs) src;
       hash = "sha256-jTVZKzX/Uy2RtyMbeQmatLLrOO+5S5jXrYKMGXNMcV4=";
     };
 
@@ -419,6 +419,6 @@ let
       };
       updateScript = nix-update-script { };
     };
-  };
+  });
 in
 fish
