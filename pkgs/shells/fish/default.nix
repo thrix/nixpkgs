@@ -1,9 +1,9 @@
 {
   stdenv,
   lib,
-  fetchurl,
-  fetchpatch,
+  fetchFromGitHub,
   coreutils,
+  darwin,
   glibcLocales,
   gnused,
   gnugrep,
@@ -151,16 +151,14 @@ let
     pname = "fish";
     version = "4.0b1";
 
-    src = fetchurl {
-      # There are differences between the release tarball and the tarball GitHub
-      # packages from the tag. Specifically, it comes with a file containing its
-      # version, which is used in `build_tools/git_version_gen.sh` to determine
-      # the shell's actual version (and what it displays when running `fish
-      # --version`), as well as the local documentation for all builtins (and
-      # maybe other things).
-      url = "https://github.com/fish-shell/fish-shell/releases/download/${finalAttrs.version}/${finalAttrs.pname}-${finalAttrs.version}.tar.xz";
-      hash = "sha256-U0M04Q+FciIU6dr/gqV8w1ASNVI/FvjxMcI0Tk7Jjac=";
+    src = fetchFromGitHub {
+      owner = "fish-shell";
+      repo = "fish-shell";
+      tag = finalAttrs.version;
+      hash = "sha256-O5xZHXNrJMpjTA2mrTqzMtU/55UArwoc2adc0R6pVl0=";
     };
+
+    env.FISH_BUILD_VERSION = finalAttrs.version;
 
     cargoDeps = rustPlatform.fetchCargoVendor {
       inherit (finalAttrs) src;
