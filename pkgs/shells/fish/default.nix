@@ -198,23 +198,23 @@ let
         sed -i 's|/usr|/|' src/tests/highlight.rs
 
         # tests/checks/cd.fish
-        sed -i 's|/bin/pwd|${coreutils}/bin/pwd|' tests/checks/cd.fish
+        sed -i 's|/bin/pwd|${lib.getExe' coreutils "pwd"}|' tests/checks/cd.fish
 
         # tests/checks/redirect.fish
-        sed -i 's|/bin/echo|${coreutils}/bin/echo|' tests/checks/redirect.fish
+        sed -i 's|/bin/echo|${lib.getExe' coreutils "echo"}|' tests/checks/redirect.fish
 
         # tests/checks/vars_as_commands.fish
         sed -i 's|/usr/bin|${coreutils}/bin|' tests/checks/vars_as_commands.fish
 
         # tests/checks/jobs.fish
-        sed -i 's|ps -o stat|${procps}/bin/ps -o stat|' tests/checks/jobs.fish
-        sed -i 's|/bin/echo|${coreutils}/bin/echo|' tests/checks/jobs.fish
+        sed -i 's|ps -o stat|${lib.getExe' procps "ps"} -o stat|' tests/checks/jobs.fish
+        sed -i 's|/bin/echo|${lib.getExe' coreutils "echo"}|' tests/checks/jobs.fish
 
         # tests/checks/job-control-noninteractive.fish
-        sed -i 's|/bin/echo|${coreutils}/bin/echo|' tests/checks/job-control-noninteractive.fish
+        sed -i 's|/bin/echo|${lib.getExe' coreutils "echo"}|' tests/checks/job-control-noninteractive.fish
 
         # tests/checks/complete.fish
-        sed -i 's|/bin/ls|${coreutils}/bin/ls|' tests/checks/complete.fish
+        sed -i 's|/bin/ls|${lib.getExe' coreutils "ls"}|' tests/checks/complete.fish
       ''
       + lib.optionalString stdenv.hostPlatform.isDarwin ''
         # Tests use pkill/pgrep which are currently not built on Darwin
@@ -327,21 +327,21 @@ let
 
     postInstall =
       ''
-        sed -r "s|command grep|command ${gnugrep}/bin/grep|" \
+        sed -r "s|command grep|command ${lib.getExe gnugrep}|" \
             -i "$out/share/fish/functions/grep.fish"
-        sed -e "s|\|cut|\|${coreutils}/bin/cut|"             \
+        sed -e "s|\|cut|\|${lib.getExe' coreutils "cut"}|"             \
             -i "$out/share/fish/functions/fish_prompt.fish"
-        sed -e "s|uname|${coreutils}/bin/uname|"             \
+        sed -e "s|uname|${lib.getExe' coreutils "uname"}|"             \
             -i "$out/share/fish/functions/__fish_pwd.fish"   \
                "$out/share/fish/functions/prompt_pwd.fish"
-        sed -e "s|sed |${gnused}/bin/sed |"                  \
+        sed -e "s|sed |${lib.getExe gnused} |"                  \
             -i "$out/share/fish/functions/alias.fish"        \
                "$out/share/fish/functions/prompt_pwd.fish"
-        sed -i "s|nroff|${groff}/bin/nroff|"                 \
+        sed -i "s|nroff|${lib.getExe' groff "nroff"}|"                 \
                "$out/share/fish/functions/__fish_print_help.fish"
         sed -i "s|/usr/local/sbin /sbin /usr/sbin||"         \
                $out/share/fish/completions/{sudo.fish,doas.fish}
-        sed -e "s| awk | ${gawk}/bin/awk |"                  \
+        sed -e "s| awk | ${lib.getExe' gawk "awk"} |"                  \
             -i $out/share/fish/functions/{__fish_print_packages.fish,__fish_print_addresses.fish,__fish_describe_command.fish,__fish_complete_man.fish,__fish_complete_convert_options.fish} \
                $out/share/fish/completions/{cwebp,adb,ezjail-admin,grunt,helm,heroku,lsusb,make,p4,psql,rmmod,vim-addons}.fish
 
@@ -357,15 +357,15 @@ let
       ''
       + lib.optionalString stdenv.hostPlatform.isLinux ''
         for cur in $out/share/fish/functions/*.fish; do
-          sed -e "s|/usr/bin/getent|${getent}/bin/getent|" \
+          sed -e "s|/usr/bin/getent|${lib.getExe getent}|" \
               -i "$cur"
         done
 
       ''
       + lib.optionalString (!stdenv.hostPlatform.isDarwin) ''
-        sed -i "s|Popen(\['manpath'|Popen(\['${man-db}/bin/manpath'|" \
+        sed -i "s|Popen(\['manpath'|Popen(\['${lib.getExe' man-db "manpath"}'|" \
                 "$out/share/fish/tools/create_manpage_completions.py"
-        sed -i "s|command manpath|command ${man-db}/bin/manpath|"     \
+        sed -i "s|command manpath|command ${lib.getExe' man-db "manpath"}|"     \
                 "$out/share/fish/functions/man.fish"
       ''
       + lib.optionalString useOperatingSystemEtc ''
